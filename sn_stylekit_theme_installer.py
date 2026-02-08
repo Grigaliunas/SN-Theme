@@ -76,7 +76,7 @@ def extract_font_family_from_index(html: str) -> str:
     Fallback: "'Courier New', monospace"
     """
     m = re.search(r"font-family:\s*([^;]+);", html, flags=re.IGNORECASE)
-    return (m.group(1).strip() if m else "'Courier New', monospace")
+    return (m.group(1).strip() if m else "-apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif")
 
 
 def extract_hex_colors_from_index(html: str) -> Tuple[str, ...]:
@@ -100,24 +100,24 @@ def palette_from_index(index_path: Path) -> Dict[str, str]:
 
     return {
         "font_family": extract_font_family_from_index(html),
-        "background": pick("#1c1c1c", "#1c1c1c"),
-        "editor_background": pick("#282828", "#282828"),
-        "panel_background": pick("#2a2a2a", "#2a2a2a"),
-        "selection_background": pick("#2f2f2f", "#2f2f2f"),
-        "status_background": pick("#343434", "#343434"),
-        "header_background": pick("#383838", "#383838"),
-        "dim_border": pick("#505050", "#505050"),
-        "border": pick("#696969", "#696969"),
-        "success": pick("#6fb86f", "#2b9612"),
-        "info": pick("#7cb8bb", "#086dd6"),
-        "comment": pick("#7f9f7f", "#989898"),
-        "accent": pick("#8cd0d3", "#7049cf"),
-        "link": pick("#93e0e3", "#086dd6"),
-        "muted": pick("#c0c0c0", "#989898"),
-        "danger": pick("#cc9393", "#f80324"),
-        "foreground": pick("#d0d0d0", "#d0d0d0"),
-        "light_foreground": pick("#dcdccc", "#ffffff"),
-        "warning": pick("#f0dfaf", "#f6a200"),
+        "background": pick("#0f1011", "#0f1011"),
+        "editor_background": pick("#0f1011", "#0f1011"),
+        "panel_background": pick("#1c1d1e", "#1c1d1e"),
+        "selection_background": pick("#28292b", "#28292b"),
+        "status_background": pick("#1c1d1e", "#1c1d1e"),
+        "header_background": pick("#1c1d1e", "#1c1d1e"),
+        "dim_border": pick("#28292b", "#28292b"),
+        "border": pick("#181a1b", "#181a1b"),
+        "success": pick("#2b9612", "#2b9612"),
+        "info": pick("#a464c2", "#a464c2"),
+        "comment": pick("#7c7c7c", "#7c7c7c"),
+        "accent": pick("#a464c2", "#a464c2"),
+        "link": pick("#a464c2", "#a464c2"),
+        "muted": pick("#999999", "#999999"),
+        "danger": pick("#f80324", "#f80324"),
+        "foreground": pick("#eeeeee", "#eeeeee"),
+        "light_foreground": pick("#ffffff", "#ffffff"),
+        "warning": pick("#cc8800", "#cc8800"),
     }
 
 
@@ -130,67 +130,83 @@ def stylekit_vars_from_palette(p: Dict[str, str]) -> Dict[str, str]:
     fg = p["foreground"]
 
     return {
+        # Top-level convenience aliases (used by Focus theme)
+        "--background-color": bg,
+        "--foreground-color": fg,
+        "--highlight-color": p["accent"],
+        "--border-color": bg,
+
+        # Component variables
+        "--sn-component-background-color": "transparent",
+        "--sn-component-foreground-color": "var(--foreground-color)",
+        "--sn-component-foreground-highlight-color": "var(--highlight-color)",
+        "--sn-component-inner-border-color": "var(--foreground-color)",
+        "--sn-component-outer-border-color": "transparent",
+
         # Font
-        "--sn-stylekit-monospace-font": p["font_family"],
+        "--sn-stylekit-monospace-font": "'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, 'Ubuntu Mono', 'Courier New', monospace",
         "--sn-stylekit-sans-serif-font": p["font_family"],
 
         # Core colors
-        "--sn-stylekit-background-color": bg,
-        "--sn-stylekit-foreground-color": fg,
+        "--sn-stylekit-background-color": "var(--background-color)",
+        "--sn-stylekit-foreground-color": "var(--foreground-color)",
         "--sn-stylekit-border-color": p["border"],
 
-        "--sn-stylekit-contrast-background-color": p["editor_background"],
-        "--sn-stylekit-contrast-foreground-color": p["muted"],
-        "--sn-stylekit-contrast-border-color": p["border"],
+        "--sn-stylekit-contrast-background-color": "#000000",
+        "--sn-stylekit-contrast-foreground-color": p["light_foreground"],
+        "--sn-stylekit-contrast-border-color": "#000000",
 
-        "--sn-stylekit-secondary-background-color": p["panel_background"],
-        "--sn-stylekit-secondary-foreground-color": fg,
-        "--sn-stylekit-secondary-border-color": p["border"],
+        "--sn-stylekit-secondary-background-color": "var(--sn-stylekit-passive-color-4)",
+        "--sn-stylekit-secondary-foreground-color": p["light_foreground"],
+        "--sn-stylekit-secondary-border-color": "#000000",
 
-        "--sn-stylekit-secondary-contrast-background-color": p["header_background"],
-        "--sn-stylekit-secondary-contrast-foreground-color": fg,
-        # Docs page contains a typo for secondary-contrast-border. Use the expected name:
-        "--sn-stylekit-secondary-contrast-border-color": p["border"],
+        "--sn-stylekit-secondary-contrast-background-color": "#000000",
+        "--sn-stylekit-secondary-contrast-foreground-color": p["light_foreground"],
+        "--sn-stylekit-secondary-contrast-border-color": p["light_foreground"],
 
         # Editor
-        "--sn-stylekit-editor-background-color": p["editor_background"],
-        "--sn-stylekit-editor-foreground-color": fg,
+        "--sn-stylekit-editor-background-color": "var(--sn-stylekit-background-color)",
+        "--sn-stylekit-editor-foreground-color": "var(--sn-stylekit-foreground-color)",
 
         # Semantic colors
-        "--sn-stylekit-neutral-color": p["muted"],
-        "--sn-stylekit-neutral-contrast-color": bg,
+        "--sn-stylekit-neutral-color": p["comment"],
+        "--sn-stylekit-neutral-contrast-color": p["light_foreground"],
 
-        "--sn-stylekit-info-color": p["info"],
-        "--sn-stylekit-info-contrast-color": bg,
+        "--sn-stylekit-info-color": "var(--highlight-color)",
+        "--sn-stylekit-info-contrast-color": "var(--foreground-color)",
 
         "--sn-stylekit-success-color": p["success"],
-        "--sn-stylekit-success-contrast-color": bg,
+        "--sn-stylekit-success-contrast-color": p["light_foreground"],
 
         "--sn-stylekit-warning-color": p["warning"],
-        "--sn-stylekit-warning-contrast-color": bg,
+        "--sn-stylekit-warning-contrast-color": p["light_foreground"],
 
         "--sn-stylekit-danger-color": p["danger"],
-        "--sn-stylekit-danger-contrast-color": bg,
+        "--sn-stylekit-danger-contrast-color": p["light_foreground"],
 
         # Misc UI tokens
-        "--sn-stylekit-shadow-color": p["dim_border"],
-        "--sn-stylekit-paragraph-text-color": fg,
+        "--sn-stylekit-shadow-color": "#000000",
+        "--sn-stylekit-paragraph-text-color": p["light_foreground"],
         "--sn-stylekit-input-placeholder-color": p["comment"],
         "--sn-stylekit-input-border-color": p["border"],
-        "--sn-stylekit-scrollbar-thumb-color": p["dim_border"],
-        "--sn-stylekit-scrollbar-track-border-color": p["border"],
+        "--sn-stylekit-scrollbar-thumb-color": "var(--sn-stylekit-info-color)",
+        "--sn-stylekit-scrollbar-track-border-color": "var(--border-color)",
         "--sn-stylekit-general-border-radius": "2px",
+        "--sn-stylekit-menu-border": "1px solid #424242",
 
-        # Greyscale ramp (optional)
-        "--sn-stylekit-grey-1": p["dim_border"],
-        "--sn-stylekit-grey-2": p["border"],
-        "--sn-stylekit-grey-3": p["selection_background"],
-        "--sn-stylekit-grey-4": p["status_background"],
-        "--sn-stylekit-grey-4-opacity-variant": p["status_background"] + "80",  # 50% alpha
-        "--sn-stylekit-grey-5": p["header_background"],
-        "--sn-stylekit-grey-6": p["editor_background"],
+        # Passive color scale (replaces grey ramp)
+        "--sn-stylekit-passive-color-0": p["muted"],
+        "--sn-stylekit-passive-color-3": p["selection_background"],
+        "--sn-stylekit-passive-color-4": p["panel_background"],
+        "--sn-stylekit-passive-color-5": p["header_background"],
 
-        # Accessory tints (optional)
+        # Desktop titlebar
+        "--sn-desktop-titlebar-bg-color": "var(--background-color)",
+        "--sn-desktop-titlebar-border-color": "var(--border-color)",
+        "--sn-desktop-titlebar-ui-color": "var(--foreground-color)",
+        "--sn-desktop-titlebar-ui-hover-color": "var(--highlight-color)",
+
+        # Accessory tints
         "--sn-stylekit-accessory-tint-color-1": p["info"],
         "--sn-stylekit-accessory-tint-color-2": p["danger"],
         "--sn-stylekit-accessory-tint-color-3": p["warning"],
@@ -206,7 +222,7 @@ def optional_overrides_from_palette(p: Dict[str, str]) -> Dict[str, str]:
     """
     return {
         "--modal-background-color": "var(--sn-stylekit-background-color)",
-        "--editor-header-bar-background-color": p["header_background"],
+        "--editor-header-bar-background-color": p["panel_background"],
         "--editor-background-color": "var(--sn-stylekit-editor-background-color)",
         "--editor-foreground-color": "var(--sn-stylekit-editor-foreground-color)",
         "--editor-title-bar-border-bottom-color": "var(--sn-stylekit-border-color)",
@@ -233,8 +249,12 @@ def optional_overrides_from_palette(p: Dict[str, str]) -> Dict[str, str]:
         "--navigation-section-title-color": "var(--sn-stylekit-secondary-foreground-color)",
         "--navigation-item-text-color": "var(--sn-stylekit-secondary-foreground-color)",
         "--navigation-item-count-color": "var(--sn-stylekit-neutral-color)",
+        "--navigation-item-selected-background-color": "var(--background-color)",
 
+        "--normal-button-background-color": p["header_background"],
         "--panel-resizer-background-color": "var(--sn-stylekit-secondary-contrast-background-color)",
+        "--popover-border-color": p["selection_background"],
+        "--separator-color": p["selection_background"],
         "--link-element-color": p["link"],
     }
 
@@ -355,7 +375,7 @@ def main(argv: Iterable[str] | None = None) -> int:
     ap.add_argument("--host", type=str, default="localhost", help="Host for local server and URL in ext.json.")
     ap.add_argument("--port", type=int, default=8001, help="Port for local server and URL in ext.json.")
     ap.add_argument("--no-optional-overrides", action="store_true", help="Do not emit optional override variables.")
-    ap.add_argument("--description", type=str, default="A dark theme inspired by Emacs Org Mode with Zenburn-like colors",
+    ap.add_argument("--description", type=str, default="A dark theme based on the Standard Notes Focus dark palette",
                     help="Theme description shown in Standard Notes.")
     ap.add_argument("--light", action="store_true", help="Mark theme as light (default is dark).")
     ap.add_argument("--cdn", type=str, default="",
@@ -387,8 +407,13 @@ def main(argv: Iterable[str] | None = None) -> int:
         if not args.no_optional_overrides:
             vars_map.update(optional_overrides_from_palette(pal))
 
-        # Set link color also on anchors (non-variable) to keep preview consistent in some contexts.
-        extra_css = f"a {{ color: {pal['link']}; }}\n"
+        # Set link color on anchors and add translucent UI dialog border override.
+        extra_css = (
+            f".translucent-ui [role='dialog'] {{\n"
+            f"  --sn-stylekit-border-color: var(--sn-stylekit-passive-color-3);\n"
+            f"}}\n\n"
+            f"a {{ color: {pal['link']}; }}\n"
+        )
     else:
         extra_css = ""
 
