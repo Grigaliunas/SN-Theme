@@ -24,8 +24,15 @@ Usage examples:
   # 4) Override one variable
   python3 sn_stylekit_theme_installer.py --from-index index.html --set "--sn-stylekit-info-color=#7cb8bb" --out dist
 
+  # 5) Generate standalone files for GitHub hosting (no local server needed)
+  python3 sn_stylekit_theme_installer.py --from-index index.html --out dist \
+    --cdn "https://cdn.jsdelivr.net/gh/Grigaliunas/SN-Theme@latest/dist" \
+    --marketing-url "https://github.com/Grigaliunas/SN-Theme"
+
 Then in Standard Notes:
-- Extensions → Import Extension → enter http://localhost:8001/ext.json
+- Local:  Preferences → General → Advanced → Install External Package → http://localhost:8001/ext.json
+- Hosted: Preferences → General → Advanced → Install External Package →
+          https://cdn.jsdelivr.net/gh/Grigaliunas/SN-Theme@latest/dist/ext.json
 """
 
 from __future__ import annotations
@@ -50,6 +57,11 @@ class ThemeMeta:
     version: str
     host: str
     port: int
+    description: str = ""
+    is_dark: bool = True
+    cdn_base: str = ""
+    marketing_url: str = ""
+    dock_icon: Dict | None = None
     css_filename: str = "theme.css"
     ext_filename: str = "ext.json"
 
@@ -245,17 +257,35 @@ def build_theme_css(vars_map: Dict[str, str], extra_css: str = "") -> str:
 
 def build_ext_json(meta: ThemeMeta) -> Dict[str, str]:
     """
-    Minimal ext.json for SN|Theme.
+    ext.json for SN|Theme.
     The 'url' should point directly to theme.css for themes.
+    When cdn_base is set, URLs point to the public CDN instead of localhost.
     """
-    return {
+    if meta.cdn_base:
+        base = meta.cdn_base.rstrip("/")
+        css_url = f"{base}/{meta.css_filename}"
+        ext_url = f"{base}/{meta.ext_filename}"
+    else:
+        css_url = f"http://{meta.host}:{meta.port}/{meta.css_filename}"
+        ext_url = None
+
+    result: Dict[str, str] = {
         "identifier": meta.identifier,
         "name": meta.name,
         "content_type": "SN|Theme",
         "area": "themes",
         "version": meta.version,
-        "url": f"http://{meta.host}:{meta.port}/{meta.css_filename}",
+        "description": meta.description,
+        "url": css_url,
+        "isDark": meta.is_dark,
     }
+    if ext_url:
+        result["latest_url"] = ext_url
+    if meta.marketing_url:
+        result["marketing_url"] = meta.marketing_url
+    if meta.dock_icon:
+        result["dock_icon"] = meta.dock_icon
+    return result
 
 
 def parse_set_overrides(items: Iterable[str]) -> Dict[str, str]:
@@ -325,6 +355,13 @@ def main(argv: Iterable[str] | None = None) -> int:
     ap.add_argument("--host", type=str, default="localhost", help="Host for local server and URL in ext.json.")
     ap.add_argument("--port", type=int, default=8001, help="Port for local server and URL in ext.json.")
     ap.add_argument("--no-optional-overrides", action="store_true", help="Do not emit optional override variables.")
+    ap.add_argument("--description", type=str, default="A dark theme inspired by Emacs Org Mode with Zenburn-like colors",
+                    help="Theme description shown in Standard Notes.")
+    ap.add_argument("--light", action="store_true", help="Mark theme as light (default is dark).")
+    ap.add_argument("--cdn", type=str, default="",
+                    help="CDN base URL for standalone hosting (e.g. https://cdn.jsdelivr.net/gh/USER/REPO@TAG/dist). "
+                         "When set, ext.json URLs point here instead of localhost.")
+    ap.add_argument("--marketing-url", type=str, default="", help="URL to project homepage / GitHub repo.")
     ap.add_argument("--serve", action="store_true", help="Run a local CORS-enabled server after generating files.")
     args = ap.parse_args(list(argv) if argv is not None else None)
 
@@ -366,12 +403,27 @@ def main(argv: Iterable[str] | None = None) -> int:
         print("[error] No variables generated. Use --from-index or --vars.", file=sys.stderr)
         return 2
 
+    # Build dock icon from palette if available
+    dock_icon = None
+    if args.from_index:
+        dock_icon = {
+            "type": "circle",
+            "background_color": pal["background"],
+            "foreground_color": pal["accent"],
+            "border_color": pal["info"],
+        }
+
     meta = ThemeMeta(
         identifier=args.identifier,
         name=args.name,
         version=args.version,
         host=args.host,
         port=args.port,
+        description=args.description,
+        is_dark=not args.light,
+        cdn_base=args.cdn,
+        marketing_url=args.marketing_url,
+        dock_icon=dock_icon,
     )
 
     theme_css = build_theme_css(vars_map, extra_css=extra_css)
@@ -382,8 +434,13 @@ def main(argv: Iterable[str] | None = None) -> int:
 
     print(f"[ok] Wrote: {out / meta.css_filename}")
     print(f"[ok] Wrote: {out / meta.ext_filename}")
-    print(f"[import] ext.json: http://{meta.host}:{meta.port}/{meta.ext_filename}")
-    print(f"[import] theme.css: http://{meta.host}:{meta.port}/{meta.css_filename}")
+    if meta.cdn_base:
+        base = meta.cdn_base.rstrip("/")
+        print(f"[install] Paste into Standard Notes → Manage Plugins → Install:")
+        print(f"          {base}/{meta.ext_filename}")
+    else:
+        print(f"[import] ext.json: http://{meta.host}:{meta.port}/{meta.ext_filename}")
+        print(f"[import] theme.css: http://{meta.host}:{meta.port}/{meta.css_filename}")
 
     if args.serve:
         serve_directory(out, host=meta.host, port=meta.port)

@@ -4,5 +4,15 @@
   "content_type": "SN|Theme",
   "area": "themes",
   "version": "1.0.0",
-  "url": "http://localhost:8001/theme.css"
+  "description": "A dark theme inspired by Emacs Org Mode with Zenburn-like colors",
+  "url": "https://cdn.jsdelivr.net/gh/Grigaliunas/SN-Theme@main/dist/theme.css",
+  "isDark": true,
+  "latest_url": "https://cdn.jsdelivr.net/gh/Grigaliunas/SN-Theme@main/dist/ext.json",
+  "marketing_url": "https://github.com/Grigaliunas/SN-Theme",
+  "dock_icon": {
+    "type": "circle",
+    "background_color": "#1c1c1c",
+    "foreground_color": "#8cd0d3",
+    "border_color": "#7cb8bb"
+  }
 }
